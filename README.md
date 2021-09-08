@@ -5,4 +5,5 @@ ESPhome with LVGL component
 esphome run esphome-lvgl.yaml
 ```
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/rcLNLm5NF4A" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+[![IMAGE ALT TEXT](http://img.youtube.com/vi/rcLNLm5NF4A/0.jpg)](http://www.youtube.com/watch?v=rcLNLm5NF4A "ESPhome with LVGL component")
+
