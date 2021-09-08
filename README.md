@@ -2,5 +2,5 @@
 ESPhome with LVGL component
 
 ```python
-esphome run lvgl.yaml
+esphome run esphome-lvgl.yaml
 ```

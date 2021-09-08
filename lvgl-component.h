@@ -45,8 +45,8 @@ public:
     indev_drv.read_cb = my_touchpad_read;
     lv_indev_drv_register(&indev_drv);
 
-    // lv_demo_widgets();
-    lv_demo_music();
+    lv_demo_widgets();
+    // lv_demo_music();
 
     this->high_freq_.start(); // avoid 16 ms delay
   }
