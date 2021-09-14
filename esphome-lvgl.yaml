@@ -5,12 +5,14 @@ esphome:
 
   # Include customized header files for TFT_eSPI, LVGL components and the demo UI
   includes:
-    - tftespi-component.h
+    # - tftespi-component.h
     - bootlogo.h
-    - lvgl-component.h
     - lv_conf.h
     - lv_demo_conf.h
-
+    - LvglComponent.h
+    - LvglCheckbox.h
+    - LvglSwitch.h
+    - LvglToggleButton.h
   # Dowload extra libraries for TFT_eSPI, LVGL and the demo UI
   libraries:
     - bodmer/tft_espi
@@ -52,8 +54,10 @@ esphome:
 #   discovery_retain: true
 
 wifi:
-  # ssid: ""
-  # password: """
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ## use fast_connect of you are connecting to a hidden WiFi network, else comment it out
+  fast_connect: true
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
@@ -69,8 +73,8 @@ logger:
 i2c:
 
 # Enable Home Assistant API
-# api:
-#   password: ""
+api:
+  password: !secret esplibapi_password
 
 # ota:
 #   password: ""
@@ -79,9 +83,36 @@ web_server:
   port: 80
 
 custom_component:
-  - lambda: |-
-      auto tftespi_component = new TFTeSPIComponent();
-      return {tftespi_component};
+  #- lambda: |-
+  #    auto tftespi_component = new TFTeSPIComponent();
+  #    return {tftespi_component};
   - lambda: |-
       auto lvgl_component = new LvglComponent();
       return {lvgl_component};
+
+# Example configuration entry
+switch:
+  - platform: custom
+    lambda: |-
+      auto my_switch1 = new LvglSwitch(50,50,80,45);
+      App.register_component(my_switch1);
+      return {my_switch1};
+    switches:
+      name: "My Switch 1"
+      
+  - platform: custom
+    lambda: |-
+      auto my_switch2 = new LvglCheckbox(50,100,150,30);
+      App.register_component(my_switch2);
+      return {my_switch2};
+    switches:
+      name: "My Switch 2"
+      
+  - platform: custom
+    lambda: |-
+      auto my_switch3 = new LvglToggleButton(50,200,150,45);
+      App.register_component(my_switch3);
+      return {my_switch3};
+    switches:
+      name: "My Switch 3"
+      

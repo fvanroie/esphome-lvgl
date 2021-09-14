@@ -1,18 +1,22 @@
-#include "esphome.h"
+#pragma once
 
-#include "tftespi-component.h"
+#include "esphome.h"
 #include "lvgl.h"
 #include "lv_demo.h"
-//#include "hasplib.h"
+#include "tft_espi.h"
+#include "bootlogo.h"
 
 const size_t buf_pix_count = LV_HOR_RES_MAX * LV_VER_RES_MAX / 5;
 
 static lv_disp_draw_buf_t disp_buf;
 static lv_color_t buf[buf_pix_count];
+lv_style_t switch_style;
 
 /* LVGL callbacks - Needs to be accessible from C library */
 void IRAM_ATTR my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data);
 void IRAM_ATTR gui_flush_cb(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
+
+TFT_eSPI tft;
 
 class LvglComponent : public Component
 {
@@ -21,6 +25,7 @@ public:
   {
     // This will be called once to set up the component
     // think of it as the setup() call in Arduino
+    tft_setup();
     lv_init();
 
 #if USE_LV_LOG != 0
@@ -45,7 +50,11 @@ public:
     indev_drv.read_cb = my_touchpad_read;
     lv_indev_drv_register(&indev_drv);
 
-    lv_demo_widgets();
+    // Make unchecked checkboxes darker grey
+    lv_style_init(&switch_style);
+    lv_style_set_bg_color(&switch_style, lv_palette_main(LV_PALETTE_GREY));
+
+    // lv_demo_widgets();
     // lv_demo_music();
 
     this->high_freq_.start(); // avoid 16 ms delay
@@ -64,6 +73,33 @@ public:
 private:
   /// High Frequency loop() requester used during sampling phase.
   HighFrequencyLoopRequester high_freq_;
+
+  void tft_setup()
+  {
+    // This will be called once to set up the component
+    // think of it as the setup() call in Arduino
+    tft.begin();
+    tft.setSwapBytes(true); /* set endianess */
+    tft.setRotation(TFT_ROTATION);
+    tft_splashscreen();
+    uint16_t calData[5] = {TOUCH_CAL_DATA};
+    tft.setTouch(calData);
+
+    delay(250);
+  }
+
+  void tft_splashscreen()
+  {
+    uint8_t fg[] = logoFgColor;
+    uint8_t bg[] = logoBgColor;
+    lv_color_t fgColor = lv_color_make(fg[0], fg[1], fg[2]);
+    lv_color_t bgColor = lv_color_make(bg[0], bg[1], bg[2]);
+
+    tft.fillScreen(bgColor.full);
+    int x = (tft.width() - logoWidth) / 2;
+    int y = (tft.height() - logoHeight) / 2;
+    tft.drawXBitmap(x, y, logoImage, logoWidth, logoHeight, fgColor.full);
+  }
 };
 
 /* Update the TFT - Needs to be accessible from C library */
@@ -104,10 +140,10 @@ void IRAM_ATTR my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *d
     data->point.x = touchX;
     data->point.y = touchY;
 
-    Serial.print("Data x");
-    Serial.println(touchX);
+    // Serial.print("Data x");
+    // Serial.print(touchX);
 
-    Serial.print("Data y");
-    Serial.println(touchY);
+    // Serial.print(" - y");
+    // Serial.println(touchY);
   }
 }
