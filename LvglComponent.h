@@ -2,12 +2,15 @@
 
 #include "esphome.h"
 #include "lvgl.h"
-#include "lv_demo.h"
 #include "tft_espi.h"
 #include "bootlogo.h"
 
 #include "esphome/core/component.h"
 #include "esphome/components/number/number.h"
+
+#ifndef TFT_INVERT_COLORS
+#define TFT_INVERT_COLORS 0
+#endif
 
 const size_t buf_pix_count = LV_HOR_RES_MAX * LV_VER_RES_MAX / 5;
 
@@ -82,11 +85,15 @@ private:
     // This will be called once to set up the component
     // think of it as the setup() call in Arduino
     tft.begin();
+    tft.invertDisplay(TFT_INVERT_COLORS);
     tft.setSwapBytes(true); /* set endianess */
     tft.setRotation(TFT_ROTATION);
     tft_splashscreen();
+
+    #ifdef TOUCH_CS
     uint16_t calData[5] = {TOUCH_CAL_DATA};
     tft.setTouch(calData);
+#endif
 
     delay(250);
   }
@@ -127,6 +134,7 @@ void IRAM_ATTR gui_flush_cb(lv_disp_drv_t *disp, const lv_area_t *area, lv_color
 /*Read the touchpad - Needs to be accessible from C library */
 void IRAM_ATTR my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 {
+#ifdef TOUCH_CS
   uint16_t touchX, touchY;
 
   bool touched = tft.getTouch(&touchX, &touchY, 600);
@@ -149,6 +157,9 @@ void IRAM_ATTR my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *d
     // Serial.print(" - y");
     // Serial.println(touchY);
   }
+#else
+  data->state = LV_INDEV_STATE_REL;
+#endif
 }
 
 class LvglCheckbox : public Component, public Switch
@@ -443,7 +454,7 @@ public:
 
     // use any of the provided current_values methods
     state->current_values_as_brightness(&brightness);
-    print(state.get_name().c_str());
+    // print(state.get_name().c_str());
     // Write red, green and blue to HW
     // ...
   }
