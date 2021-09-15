@@ -5,19 +5,16 @@ esphome:
 
   # Include customized header files for TFT_eSPI, LVGL components and the demo UI
   includes:
-    # - tftespi-component.h
     - bootlogo.h
     - lv_conf.h
-    - lv_demo_conf.h
+    #- lv_demo_conf.h
     - LvglComponent.h
-    - LvglCheckbox.h
-    - LvglSwitch.h
-    - LvglToggleButton.h
+
   # Dowload extra libraries for TFT_eSPI, LVGL and the demo UI
   libraries:
     - bodmer/tft_espi
     - lvgl/lvgl
-    - lvgl/lv_examples
+    #- lvgl/lv_examples
 
   platformio_options:
     upload_speed: 1500000
@@ -93,26 +90,94 @@ custom_component:
 # Example configuration entry
 switch:
   - platform: custom
+    id: my_switch1
     lambda: |-
       auto my_switch1 = new LvglSwitch(50,50,80,45);
       App.register_component(my_switch1);
       return {my_switch1};
     switches:
       name: "My Switch 1"
+      on_turn_on:
+        - switch.turn_on: relay1
+      on_turn_off:
+        - switch.turn_off: relay1
       
   - platform: custom
+    id: my_switch2
     lambda: |-
       auto my_switch2 = new LvglCheckbox(50,100,150,30);
       App.register_component(my_switch2);
       return {my_switch2};
     switches:
       name: "My Switch 2"
+      on_turn_on:
+        - switch.turn_on: relay2
+      on_turn_off:
+        - switch.turn_off: relay2
       
   - platform: custom
+    id: my_switch3
     lambda: |-
       auto my_switch3 = new LvglToggleButton(50,200,150,45);
       App.register_component(my_switch3);
       return {my_switch3};
     switches:
       name: "My Switch 3"
-      
+      icon: "mdi:ceiling-light"
+      on_turn_on:
+        - switch.turn_on: relay3
+      on_turn_off:
+        - switch.turn_off: relay3
+
+# Linked Output Relays
+  - platform: gpio
+    pin: GPIO12
+    id: relay1
+
+  - platform: gpio
+    pin: GPIO14
+    id: relay2
+
+  - platform: gpio
+    pin: GPIO27
+    id: relay3
+
+light:
+# Backlight
+  - platform: monochromatic
+    output: backlight_led
+    name: "Backlight"
+
+# Moodlight
+  - platform: rgb
+    name: "Moodlight"
+    red: moodlight_red
+    green: moodlight_green
+    blue: moodlight_blue
+
+  - platform: custom
+    lambda: |-
+      auto my_number1 = new LvglLight(50,200,80,45);
+      App.register_component(my_number1);
+      return {my_number1};
+    lights:
+      - name: "My Slider Light"
+
+output:
+# Backlight Channel
+  - platform: ledc
+    id: backlight_led
+    pin: GPIO32
+
+# Moodlight Color Channels
+  - platform: ledc
+    id: moodlight_red
+    pin: GPIO26
+  - platform: ledc
+    id: moodlight_green
+    pin: GPIO25
+  - platform: ledc
+    id: moodlight_blue
+    pin: GPIO2
+
+number:
