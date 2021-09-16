@@ -13,6 +13,7 @@ esphome:
   libraries:
     - bodmer/tft_espi
     - lvgl/lvgl
+    - git+https://github.com/aselectroworks/Arduino-FT6336U.git
 
   platformio_options:
     upload_speed: 1500000
@@ -39,6 +40,10 @@ esphome:
       - "-D TFT_SDA_READ            ; Read from display, it only provides an SDA pin"
       - "-D TFT_INVERT_COLORS=0"
       - "-D TFT_INVERSION_ON"
+      - "-D TOUCH_SDA=4"
+      - "-D TOUCH_SCL=0"
+      - "-D TOUCH_RST=-1"
+      - "-D TOUCH_IRQ=-1"
       #- "-D TOUCH_CS=12  ; Default for TFT connector"
       #- "-D TOUCH_CAL_DATA=268,3553,383,3532,6  ; Touch Calibration Data"
       - "-D SPI_FREQUENCY=80000000"

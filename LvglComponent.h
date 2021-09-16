@@ -8,9 +8,16 @@
 #include "esphome/core/component.h"
 #include "esphome/components/number/number.h"
 
+#include <Wire.h>
+#include "FT6336U.h"
+
 #ifndef TFT_INVERT_COLORS
 #define TFT_INVERT_COLORS 0
 #endif
+
+#define RST_PIN (TOUCH_RST) // -1 if pin is connected to VCC else set pin number
+FT6336U* ft6336u_touch;
+static inline void FT6336U_drv_init();
 
 const size_t buf_pix_count = LV_HOR_RES_MAX * LV_VER_RES_MAX / 5;
 
@@ -20,6 +27,7 @@ lv_style_t switch_style;
 
 /* LVGL callbacks - Needs to be accessible from C library */
 void IRAM_ATTR my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data);
+void IRAM_ATTR cap_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data);
 void IRAM_ATTR gui_flush_cb(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
 
 TFT_eSPI tft;
@@ -53,7 +61,7 @@ public:
     static lv_indev_drv_t indev_drv;
     lv_indev_drv_init(&indev_drv);
     indev_drv.type = LV_INDEV_TYPE_POINTER;
-    indev_drv.read_cb = my_touchpad_read;
+    indev_drv.read_cb = cap_touchpad_read;
     lv_indev_drv_register(&indev_drv);
 
     // Make unchecked checkboxes darker grey
@@ -90,9 +98,11 @@ private:
     tft.setRotation(TFT_ROTATION);
     tft_splashscreen();
 
-    #ifdef TOUCH_CS
+#ifdef TOUCH_CS
     uint16_t calData[5] = {TOUCH_CAL_DATA};
     tft.setTouch(calData);
+    #else
+            FT6336U_drv_init();
 #endif
 
     delay(250);
@@ -160,6 +170,54 @@ void IRAM_ATTR my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *d
 #else
   data->state = LV_INDEV_STATE_REL;
 #endif
+}
+
+void IRAM_ATTR cap_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
+{
+  if (ft6336u_touch->read_touch_number() == 1)
+  {
+    // if (hasp_sleep_state != HASP_SLEEP_OFF)
+    //   hasp_update_sleep_state(); // update Idle
+
+    data->point.x = ft6336u_touch->read_touch1_x();
+    data->point.y = ft6336u_touch->read_touch1_y();
+    data->state = LV_INDEV_STATE_PR;
+  }
+  else
+  {
+    data->state = LV_INDEV_STATE_REL;
+  }
+}
+
+static inline void FT6336U_drv_init()
+{
+    // LOG_INFO(TAG_DRVR, F("Touch SDA     : %d"), TOUCH_SDA);
+    // LOG_INFO(TAG_DRVR, F("Touch SCL     : %d"), TOUCH_SCL);
+    // LOG_INFO(TAG_DRVR, F("Touch freq.   : %d"), TOUCH_FREQUENCY);
+    // LOG_INFO(TAG_DRVR, F("Touch address : %x"), I2C_ADDR_FT6336U);
+
+    ft6336u_touch = new FT6336U(TOUCH_SDA, TOUCH_SCL, TOUCH_RST, TOUCH_IRQ);
+    ft6336u_touch->begin();
+
+    // From:  M5Core2/src/M5Touch.cpp
+    // By default, the FT6336 will pulse the INT line for every touch
+    // event. But because it shares the Wire1 TwoWire/I2C with other
+    // devices, we cannot easily create an interrupt service routine to
+    // handle these events. So instead, we set the INT wire to polled mode,
+    // so it simply goes low as long as there is at least one valid touch.
+    // ft6336u_touch->writeByte(0xA4, 0x00);
+    Wire1.beginTransmission(I2C_ADDR_FT6336U);
+    Wire1.write(0xA4); // address
+    Wire1.write(0x00); // data
+    Wire1.endTransmission();
+
+    // touch_scan(Wire1);
+
+    if(ft6336u_touch->read_chip_id() != 0) {
+        printf("FT6336U touch driver started chipid: %d", ft6336u_touch->read_chip_id());
+    } else {
+        printf("FT6336U touch driver failed to start");
+    }
 }
 
 class LvglCheckbox : public Component, public Switch
