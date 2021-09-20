@@ -3,7 +3,7 @@
 #include "esphome.h"
 #include "lvgl.h"
 #include "lv_demo.h"
-#include "tft_espi.h"
+#include "TFT_eSPI.h"
 #include "bootlogo.h"
 
 const size_t buf_pix_count = LV_HOR_RES_MAX * LV_VER_RES_MAX / 5;
